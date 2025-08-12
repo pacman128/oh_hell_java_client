@@ -1,24 +1,29 @@
 package ohhell.game;
 
 import java.io.*;
+import java.lang.invoke.MethodHandles;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
 
 public class Settings {
-    private final static Logger logger = Logger.getLogger("ohhell.game.Settings");
+    private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
     final private String propertiesFile;
 
-    private record SettingsRec( String name, String host, int port) {}
+    public record SettingsRec( String name,
+                               String host,
+                               int port,
+                               Integer audibleReminderFreq ) {}
     private record SettingsJson(SettingsRec settings) {}
 
-    private SettingsJson settings = new SettingsJson(new SettingsRec("", "127.0.0.1", 7000));
+    private SettingsJson settings = new SettingsJson(new SettingsRec("", "127.0.0.1", 7000, 10));
     private final SettingsListener listener;
 
+    @FunctionalInterface
     public interface SettingsListener {
-        void settingsChanged(String name, String host, int port);
+        void settingsChanged(SettingsRec settings);
     }
 
     public Settings(String propertiesFile, SettingsListener listener) {
@@ -31,15 +36,13 @@ public class Settings {
         }
     }
 
-    public boolean readSettings() throws IOException {
+    public void readSettings() throws IOException {
         Gson gson = new Gson();
         try(BufferedReader rdr = new BufferedReader(new FileReader(propertiesFile))) {
             settings = gson.fromJson(rdr, SettingsJson.class);
-            return true;
         } catch( FileNotFoundException e) {
             writeSettings();
         }
-        return false;
     }
 
     public void writeSettings() throws IOException {
@@ -63,37 +66,32 @@ public class Settings {
         return settings.settings.port;
     }
 
+    public Integer getAudibleReminderFreq() {
+        return settings.settings.audibleReminderFreq;
+    }
+
     private void updateListener() {
-        listener.settingsChanged(settings.settings.name, settings.settings.host, settings.settings.port);
+        listener.settingsChanged(settings.settings);
 
     }
 
     public void setName(String name) {
-        settings = new SettingsJson(new SettingsRec(name, settings.settings.host, settings.settings.port));
+        settings = new SettingsJson(new SettingsRec(name, settings.settings.host, settings.settings.port, settings.settings.audibleReminderFreq));
         updateListener();
     }
 
-    public void setHost(String host) {
-        settings = new SettingsJson(new SettingsRec(settings.settings.name, host, settings.settings.port));
-        updateListener();
-    }
 
-    public void setPort(int port) {
-        settings = new SettingsJson(new SettingsRec(settings.settings.name, settings.settings.host, port));
-        updateListener();
-    }
-
-    public void setValues(String name, String host, int port) {
-        settings = new SettingsJson(new SettingsRec(name, host, port));
+    public void setValues(SettingsRec settings) {
+        this.settings = new SettingsJson(settings);
         updateListener();
     }
 
     public static void main( String [] args) throws IOException {
-        var settings = new Settings("/home/pcarter/settings.json", (n, h, p) -> {});
+        var settings = new Settings("/home/pcarter/settings.json", (rec) -> {});
         settings.setName("Paul");
         settings.writeSettings();
 
-        var otherSettings = new Settings("/home/pcarter/settings.json", (n, h, p) -> {});
+        var otherSettings = new Settings("/home/pcarter/settings.json", (rec) -> {});
         otherSettings.readSettings();
         System.out.println("Name: " + otherSettings.getName());
     }

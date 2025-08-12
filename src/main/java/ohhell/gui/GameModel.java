@@ -72,7 +72,7 @@ public class GameModel implements ClientProtocol  {
     private final List<Listener> listeners = new ArrayList<>();
 
     public interface Listener {
-        void settingsChanged(String name, String host, int port);
+        void settingsChanged(Settings.SettingsRec rec);
 
         void gameStateChanged();
 
@@ -87,7 +87,7 @@ public class GameModel implements ClientProtocol  {
     public static class ListenerAdapter implements Listener {
 
         @Override
-        public void settingsChanged(String name, String host, int port) { }
+        public void settingsChanged(Settings.SettingsRec rec) { }
 
         @Override
         public void gameStateChanged() { }
@@ -195,6 +195,19 @@ public class GameModel implements ClientProtocol  {
         notifyListeners();
     }
 
+    public boolean bidRequired() {
+        return state == GameModel.State.WAITING_FOR_BID_RESPONSE;
+    }
+
+    public boolean cardRequired() {
+        return state == GameModel.State.WAITING_FOR_CARD_RESPONSE;
+    }
+
+    public boolean userActionRequired() {
+        return cardRequired() || bidRequired();
+    }
+
+
     private void notifyListeners() {
         for( var listener: listeners) {
             listener.gameStateChanged();
@@ -225,11 +238,13 @@ public class GameModel implements ClientProtocol  {
 
     @Override
     public void validation(String errorMsg) {
-        setSelectedCard(-1);
-        state = State.PLAYING;
         if (errorMsg != null) {
             gameLogger.log(String.format("%s is not valid: %s", Deck.cardToString(cardBeingValidiated), errorMsg));
+        } else {
+            state = State.PLAYING;
+            playCard();
         }
+        notifyListeners();
     }
 
     @Override
@@ -362,7 +377,7 @@ public class GameModel implements ClientProtocol  {
             if (scoreDelta > 0) {
                 line.append(String.format("made %d points", scoreDelta));
             } else if (scoreDelta < 0) {
-                line.append(String.format("lost %d points", -scoreDelta));
+                line.append(String.format("when down %d points", -scoreDelta));
             } else {
                 line.append("went over");
             }
@@ -401,9 +416,9 @@ public class GameModel implements ClientProtocol  {
         gameLogger.log(String.format("Error: %s", msg));
     }
 
-    private void settingsChanged(String name, String host, int port) {
+    private void settingsChanged(Settings.SettingsRec settings) {
         for( var listener: listeners) {
-            listener.settingsChanged(name, host, port);
+            listener.settingsChanged(settings);
         }
     }
 

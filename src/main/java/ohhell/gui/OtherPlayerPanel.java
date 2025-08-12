@@ -7,6 +7,9 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Panel to display client's opponents hand
+ */
 public class OtherPlayerPanel extends JPanel {
 
     final static int baseCardTop = 50;
@@ -17,6 +20,12 @@ public class OtherPlayerPanel extends JPanel {
     private final Font nameFont;
     private final GameModel model;
 
+    /**
+     * Create a panel to display an opponent's hand
+     * @param model Game model
+     * @param playerId ID of opponent
+     * @param font Font to use
+     */
     public OtherPlayerPanel(GameModel model, int playerId, Font font) {
         super();
         this.model = model;
@@ -26,6 +35,10 @@ public class OtherPlayerPanel extends JPanel {
         setBorder(BorderFactory.createLineBorder(Color.black));
     }
 
+    /**
+     * Paint the panel
+     * @param g Graphics constext to use
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);

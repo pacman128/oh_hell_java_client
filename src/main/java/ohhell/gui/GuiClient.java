@@ -1,5 +1,6 @@
 package ohhell.gui;
 
+import ohhell.Util;
 import ohhell.game.*;
 import ohhell.network.AsyncMessageClient;
 
@@ -8,12 +9,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class GuiClient extends JFrame {
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
+
+    private final static String VERSION = "1.0";
 
     private final GameModel model = new GameModel();
 
@@ -33,27 +35,14 @@ public class GuiClient extends JFrame {
 
     private final Timer networkTask = new Timer(timeout, this::networkProc);
 
-
-    private static void setLevel(Logger pLogger, Level pLevel) {
-        Handler[] handlers = pLogger.getHandlers();
-        for (Handler h : handlers) {
-            h.setLevel(pLevel);
-        }
-        pLogger.setLevel(pLevel);
-    }
-
-    private static void setLevel(Level pLevel) {
-        setLevel(Logger.getLogger(""), pLevel);
-    }
-
     public GuiClient() {
         super("Oh Hell");
         model.addListener(mainPanel);
         model.setUserInput(mainPanel);
         model.addListener(new GameModel.ListenerAdapter() {
             @Override
-            public void settingsChanged(String name, String host, int port) {
-                handleSettingsChange(name, host, port);
+            public void settingsChanged(Settings.SettingsRec settings) {
+                handleSettingsChange(settings);
             }
         });
         networkTask.setCoalesce(true);
@@ -77,6 +66,11 @@ public class GuiClient extends JFrame {
         settings.addActionListener(this::handleSettings);
         game.add(settings);
         menuBar.add(game);
+        var help = new JMenu("Help");
+        var about = new JMenuItem("About", KeyEvent.VK_A);
+        about.addActionListener(this::handleAbout);
+        help.add(about);
+        menuBar.add(help);
         setJMenuBar(menuBar);
     }
 
@@ -107,28 +101,24 @@ public class GuiClient extends JFrame {
         settingsDialog.setVisible(true);
     }
 
-    private void handleSettingsChange( String name, String host, int port) {
-        SwingUtilities.invokeLater(() -> {
-        connectItem.setEnabled(!(name.isBlank() || host.isBlank() || model.getState() == GameModel.State.DISCONNECTED)); } );
+    private void handleAbout(ActionEvent e) {
+        JOptionPane.showMessageDialog(this,
+                "Oh Hell Client version " + VERSION,
+                "About",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
-    //TODO: Is this needed?
-    private void sendCommand(Commands cmd, String... args) throws IOException {
-        StringBuilder msg = new StringBuilder( cmd.toString());
-        for( String arg: args) {
-            msg.append(" ");
-            msg.append(arg);
-        }
-        messageClient.sendMessage(msg.toString(), 1000);
+    private void handleSettingsChange( final Settings.SettingsRec settings) {
+        SwingUtilities.invokeLater(() -> {
+        connectItem.setEnabled( !(settings.name().isBlank()
+                                  || settings.host().isBlank()
+                                  || model.getState() != GameModel.State.DISCONNECTED)); } );
     }
 
     private void networkProc(ActionEvent e) {
         try {
             adapter.process(100);
-            if (model.getState() == GameModel.State.WAITING_FOR_BID_RESPONSE
-                || model.getState() == GameModel.State.WAITING_FOR_CARD_RESPONSE) {
-                SoundUtils.beep();
-            }
+            mainPanel.processUserHints();
         } catch (IOException ex) {
             mainPanel.log("Error: " + ex.getLocalizedMessage());
             logger.severe(ex.getLocalizedMessage());
@@ -144,8 +134,23 @@ public class GuiClient extends JFrame {
     }
 
     public static void main( String [] args) throws IOException {
-        setLevel(Logger.getLogger("ohhell"), Level.FINEST);
-        logger.finer("FINER level msg");
+        if (args.length > 0) {
+            switch(args[0]) {
+                case "quiet":
+                    Util.setLevel(Logger.getLogger("ohhell"), Level.WARNING);
+                    break;
+                case "debug":
+                    Util.setLevel(Logger.getLogger("ohhell"), Level.FINER);
+                    break;
+                case "detailed":
+                    Util.setLevel(Logger.getLogger("ohhell"), Level.FINEST);
+                    break;
+                default:
+                    System.err.println("Unknown option: " + args[0]);
+                    break;
+            }
+        }
+
         Deck.loadCardImages();
 
         SwingUtilities.invokeLater( () -> {

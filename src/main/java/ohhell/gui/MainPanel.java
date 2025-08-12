@@ -2,6 +2,7 @@ package ohhell.gui;
 
 import ohhell.game.ClientProtocol;
 import ohhell.game.Deck;
+import ohhell.game.Settings;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -13,14 +14,13 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class MainPanel extends JPanel implements GameModel.Listener, GameModel.UserInput {
 
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
     private final static Font textFont = new Font(Font.SERIF, Font.BOLD, 16);
     private final static int cardTextSize = 20;
+    private final static Color notifyColor = Color.green;
 
     private final GameModel model;
     private final JPanel otherPlayersPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
@@ -28,14 +28,22 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
     private final LogPanel logPanel = new LogPanel(20, 30);
     private final JButton playButton = new JButton("Play");
     private final JLabel playLabel = new JLabel(getCardText(null));
-    private final JLabel bidLabel = new JLabel("Bid: ");
     private final IntTextField bidField =  new IntTextField(0, 2);
     private final JPanel playButtonPanel;
     private final JPanel bidPanel;
 
+    private int beepCounter = 0;
     private ClientProtocol.InputCallback cardCallback;
     private ClientProtocol.InputCallback bidCallback;
 
+    /**
+     * Get card text for the play card panel.
+     *
+     * This method pads the text with spaces to keep the panel the same size no matter what
+     * card is selected (or none selected)
+     * @param card card value as Integer (null if not card selected)
+     * @return String with card value padded to cardTextSize characters or all spaces if card is null
+     */
     private static String getCardText( Integer card) {
         if (card == null) {
             return " ".repeat(cardTextSize);
@@ -58,7 +66,6 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
         topPanel.add(trumpPanel, BorderLayout.WEST);
         topPanel.add(otherPlayersPanel, BorderLayout.CENTER);
         centerPanel.add(topPanel, BorderLayout.NORTH);
-        //topPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Top"));
 
         var rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(new EmptyBorder(3,3,3,3));
@@ -75,12 +82,39 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
         buttonPanel.add(playButtonPanel, BorderLayout.WEST);
         bidPanel = new JPanel(new FlowLayout((FlowLayout.TRAILING)));
         buttonPanel.add(bidPanel, BorderLayout.EAST);
+        JLabel bidLabel = new JLabel("Bid: ");
         bidPanel.add(bidLabel);
         bidPanel.add(bidField);
         centerPanel.add(buttonPanel, BorderLayout.SOUTH);
         playButton.setEnabled(false);
         playButton.addActionListener(this::cardPlayed);
         bidField.addActionListener(this::bidMade);
+    }
+
+    private static void blink(JComponent comp, Color normalColor, Color otherColor) {
+        comp.setBackground((comp.getBackground() == normalColor) ? otherColor : normalColor);
+    }
+
+    public void processUserHints() {
+        if (model.userActionRequired()) {
+            var reminderFreq = model.getSettings().getAudibleReminderFreq();
+            if ( reminderFreq != null ) {
+                beepCounter++;
+                if (beepCounter >= reminderFreq) {
+                    SoundUtils.beep();
+                    beepCounter = 0;
+                }
+            }
+
+            var normalBackground = playButtonPanel.getParent().getBackground();
+            if (model.bidRequired()) {
+                blink(bidPanel, normalBackground, notifyColor);
+            }
+            if (model.cardRequired()) {
+                blink(playButtonPanel, normalBackground, notifyColor);
+            }
+        }
+
     }
 
     public void log(String msg) {
@@ -96,8 +130,8 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
     }
 
     @Override
-    public void settingsChanged(String name, String host, int port) {
-
+    public void settingsChanged(Settings.SettingsRec rec) {
+        beepCounter = 0;
     }
 
     @Override
@@ -117,10 +151,10 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
     public void gameStateChanged() {
         switch(model.getState()) {
             case WAITING_FOR_CARD_RESPONSE:
-                playButtonPanel.setBackground(Color.green);
+                playButtonPanel.setBackground(notifyColor);
                 break;
             case WAITING_FOR_BID_RESPONSE:
-                bidPanel.setBackground(Color.green);
+                bidPanel.setBackground(notifyColor);
                 break;
             default:
                 playButtonPanel.setBackground(playButtonPanel.getParent().getBackground());
@@ -145,14 +179,11 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
     private void cardPlayed(ActionEvent e) {
         playButton.setEnabled(false);
         cardCallback.returnValue(model.getSelectedCard());
-        cardCallback = null;
-        model.playCard();
     }
 
     private void bidMade(ActionEvent e) {
         bidField.setEnabled(false);
         bidCallback.returnValue(bidField.getValue());
-        bidCallback = null;
         bidField.clear();
     }
 

@@ -8,13 +8,17 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * Panel to display and select users cards
+ */
 public class HandPanel extends JPanel {
 
-    private final static Logger logger = Logger.getLogger("ohhell.gui.HandPanel");
+    private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
     private final static int baseCardTop = 350;
     private final static int cardSpacing = 10;
     private final static int selectedCardOffset = 15;

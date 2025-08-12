@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class ClientAdapter {
+    private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
     private final AsyncMessageClient networkClient;
 
@@ -255,7 +256,7 @@ public class ClientAdapter {
                             String name = names.get(i);
                             if (deltas.get(i) > 0) {
                                 logInfo(String.format("%s made %d points", name, deltas.get(i)));
-                            } else if (deltas.get(i) < 0) {
+                            } else if (deltas.get(i) == 0) {
                                 logInfo(String.format("%s went over", name));
                             } else {
                                 logInfo(String.format("%s went down %d", name, -deltas.get(i)));

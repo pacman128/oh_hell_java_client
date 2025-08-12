@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.logging.Logger;
 
+/**
+ * Dialog to change settings
+ */
 public class SettingsDialog extends JDialog {
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
@@ -19,6 +22,9 @@ public class SettingsDialog extends JDialog {
     private final IntTextField port = new IntTextField(7000, 5);
 
     private final JTextField name = new NameTextField( "", 15);
+
+    private final static String [] freqs = { "None", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+    private final JComboBox<String> reminderFreq = new JComboBox<>(freqs);
 
     private final Settings settings;
 
@@ -52,8 +58,9 @@ public class SettingsDialog extends JDialog {
         addRow(mainPanel, "Name", name);
         addRow(mainPanel, "Host", host);
         addRow(mainPanel, "Port", port);
+        addRow(mainPanel, "Audible Reminder Freq (sec)", reminderFreq);
 
-        SpringUtilities.makeCompactGrid(mainPanel, 3, 2, 6, 6, 6, 6);
+        SpringUtilities.makeCompactGrid(mainPanel, 4, 2, 6, 6, 6, 6);
         setContentPane(contentPane);
         pack();
 
@@ -76,10 +83,16 @@ public class SettingsDialog extends JDialog {
         name.setText(settings.getName());
         host.setText(settings.getHost());
         port.setText("" + settings.getPort());
+        if (settings.getAudibleReminderFreq() == null) {
+            reminderFreq.setSelectedIndex(0);
+        } else {
+            reminderFreq.setSelectedIndex( settings.getAudibleReminderFreq() - 1);
+        }
     }
 
     private void updateSettings() {
-        settings.setValues(name.getText(), host.getText(), port.getValue());
+        Integer reminderValue = (reminderFreq.getSelectedIndex() == 0 ? null : Integer.parseInt((String) reminderFreq.getSelectedItem()));
+        settings.setValues(new Settings.SettingsRec(name.getText(), host.getText(), port.getValue(), reminderValue));
     }
 
     private void processOk(ActionEvent e) {
@@ -100,7 +113,7 @@ public class SettingsDialog extends JDialog {
         var frame = new JFrame("SettingsDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        var settings = new Settings("/home/pcarter/settings.json", (n, h, p) -> {});
+        var settings = new Settings("/home/pcarter/settings.json", (rec) -> {});
         var dialog = new SettingsDialog(frame, settings);
         var contentPanel = new JPanel();
         var showSettings = new JButton("Settings");

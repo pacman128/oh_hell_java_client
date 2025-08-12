@@ -1,5 +1,7 @@
 package ohhell.network;
 
+import ohhell.Util;
+
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.io.*;
@@ -205,9 +207,10 @@ public class AsyncClient implements AutoCloseable{
 
     public static void main(String [] args) {
 
+        Util.setLevel(Logger.getLogger("ohhell"), Level.FINER);
         try (
             AsyncClient client = new AsyncClient("127.0.0.1", 7001, (ByteBuffer buf) -> {
-                System.out.println("Read " + buf.remaining() + " bytes");
+                logger.fine("Read " + buf.remaining() + " bytes");
                 buf.clear();
             });
             ){

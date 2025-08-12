@@ -6,9 +6,20 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import javax.swing.text.Document;
 
+/**
+ * Integer input text field
+ *
+ * @see https://web.archive.org/web/20210108210848/http://www.java2s.com/Code/Java/Swing-JFC/Textfieldonlyacceptsnumbers.htm
+ */
 class IntTextField extends JTextField {
-    public IntTextField(Integer defval, int size) {
-        super( defval != null ? defval.toString(): "", size);
+
+    /**
+     * Create new field
+     * @param defaultValue Default value (can be null)
+     * @param size Size of field
+     */
+    public IntTextField(Integer defaultValue, int size) {
+        super( defaultValue != null ? defaultValue.toString(): "", size);
     }
 
     @Override
@@ -29,6 +40,10 @@ class IntTextField extends JTextField {
         }
     }
 
+    /**
+     * Get value of field
+     * @return Value of field (0 on error)
+     */
     public int getValue() {
         try {
             return Integer.parseInt(getText());
@@ -37,6 +52,9 @@ class IntTextField extends JTextField {
         }
     }
 
+    /**
+     * Clear the field
+     */
     public void clear() {
         try {
             getDocument().remove(0, getDocument().getLength());
@@ -45,6 +63,9 @@ class IntTextField extends JTextField {
         }
     }
 
+    /**
+     * Document class for field
+     */
     static private class IntTextDocument extends PlainDocument {
         @Override
         public void insertString(int offs, String str, AttributeSet a)

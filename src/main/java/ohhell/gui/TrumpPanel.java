@@ -7,10 +7,20 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Panel to display the trump card.
+ *
+ * Uses a border titled Trump
+ */
 public class TrumpPanel extends JPanel {
 
+    /** Game model */
     private final GameModel model;
 
+    /**
+     * Create a trump panel
+     * @param model Game model
+     */
     public TrumpPanel( GameModel model) {
         super();
         this.model = model;
@@ -21,6 +31,10 @@ public class TrumpPanel extends JPanel {
         setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Trump"));
     }
 
+    /**
+     * Paint the trump panel
+     * @param g Graphics context to use
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);

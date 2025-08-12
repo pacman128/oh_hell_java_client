@@ -6,7 +6,15 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import javax.swing.text.Document;
 
+/**
+ * Name input text field
+ */
 class NameTextField extends JTextField {
+    /**
+     * Create a new field
+     * @param defaultValue Default value for field
+     * @param size Size of field
+     */
     public NameTextField(String defaultValue, int size) {
         super(defaultValue, size);
     }
@@ -21,6 +29,9 @@ class NameTextField extends JTextField {
         return super.isValid() && ! getText().contains(" ");
     }
 
+    /**
+     * Document class for field
+     */
     static private class NameTextDocument extends PlainDocument {
         @Override
         public void insertString(int offs, String str, AttributeSet a)

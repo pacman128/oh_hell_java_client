@@ -5,16 +5,17 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Panel to show the status of the game.
+ *
+ * For each user it shows the bid amount, current tricks taken and score.
+ */
 public class GameStatusPanel extends JPanel {
-
-    private final JTable table;
-
-    private final DefaultTableModel model;
 
     public GameStatusPanel(GameModel gameModel, Font font) {
         super(new BorderLayout());
-        model = gameModel.getStatusTableModel();
-        table = new JTable(model);
+        DefaultTableModel model = gameModel.getStatusTableModel();
+        JTable table = new JTable(model);
         table.setFont(font);
         // Needed for table header to be display. See https://stackoverflow.com/a/31137737/1366027
         add(table, BorderLayout.CENTER);
