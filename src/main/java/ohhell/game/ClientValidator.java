@@ -129,8 +129,6 @@ public class ClientValidator implements ClientProtocol{
         cardValidator.setCards(cardList);
         // Tell bid validator about new hand
         bidValidator.newHand(cards.size());
-        // Reset leadCard value
-        leadCard = -1;
         client.handStarted(cards, dealer, trump);
     }
 
@@ -158,6 +156,8 @@ public class ClientValidator implements ClientProtocol{
     @Override
     public void trickStarted(int trickNum) {
         client.trickStarted(trickNum);
+        // Reset leadCard value
+        leadCard = -1;
     }
 
     @Override

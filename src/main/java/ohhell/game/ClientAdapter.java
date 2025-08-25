@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class ClientAdapter {
-    private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
-
     private final AsyncMessageClient networkClient;
 
     private final ClientProtocol client;
@@ -206,7 +204,8 @@ public class ClientAdapter {
                         int trump = Integer.parseInt(tokens[1]);
                         trickNum = 0;
                         numCards = handCards.size();
-                        logInfo(String.format("Hand started with %d cards trump %s dealer %s",
+                        Collections.sort(handCards);
+                        logInfo(String.format("New hand with %d cards trump: %s dealer: \"%s\"",
                                 numCards,
                                 (trump >= 0) ? Deck.cardToString(trump) : "None",
                                 names.get(dealer)));
@@ -217,7 +216,7 @@ public class ClientAdapter {
                     case BID_ANNOUNCE: {
                         int bid = Integer.parseInt(tokens[2]);
                         int playerId = Integer.parseInt(tokens[1]);
-                        logInfo(String.format("%s bid %d", names.get(playerId), bid));
+                        logInfo(String.format("\"%s\" bid %d", names.get(playerId), bid));
                         client.bidMade(playerId, bid);
                         }
                         break;
@@ -241,6 +240,7 @@ public class ClientAdapter {
                         if (trickNum < numCards) {
                             client.trickStarted(trickNum);
                         }
+                        logInfo(String.format("\"%s\" won trick", names.get(winner)));
                         break;
                     }
                     case END_HAND:
@@ -252,14 +252,14 @@ public class ClientAdapter {
                         for(int i=0; i < scores.size(); i++) {
                             scores.set(i, scores.get(i) + deltas.get(i));
                         }
-                        for(int i=1; i < deltas.size(); i++) {
+                        for(int i=0; i < deltas.size(); i++) {
                             String name = names.get(i);
                             if (deltas.get(i) > 0) {
-                                logInfo(String.format("%s made %d points", name, deltas.get(i)));
+                                logInfo(String.format("\"%s\" made %d points", name, deltas.get(i)));
                             } else if (deltas.get(i) == 0) {
-                                logInfo(String.format("%s went over", name));
+                                logInfo(String.format("\"%s\" went over", name));
                             } else {
-                                logInfo(String.format("%s went down %d", name, -deltas.get(i)));
+                                logInfo(String.format("\"%s\" went down %d", name, -deltas.get(i)));
                             }
                         }
                         client.handEnded(tricksMade, deltas);
@@ -271,9 +271,8 @@ public class ClientAdapter {
                         for(int i=1; i < tokens.length; i++) {
                             winners.add(Integer.parseInt(tokens[i]));
                         }
-                        // TODO: This is already logged to the log window by GameModel
                         List<String> winnerNames = winners.stream().map(names::get).toList();
-                        logInfo(String.format("Game over, winner(s) %s", Arrays.toString(winnerNames.toArray())));
+                        logInfo(String.format("Game over, winner(s): %s", Arrays.toString(winnerNames.toArray())));
                         client.gameEnded(scores, winners);
                         break;
                     }

@@ -17,14 +17,13 @@ import java.util.logging.Logger;
 public class SettingsDialog extends JDialog {
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
-    private final JTextField host = new JTextField(20);
-
-    private final IntTextField port = new IntTextField(7000, 5);
-
+    private final DefaultComboBoxModel<String> serverModel = new DefaultComboBoxModel<>();
+    private final JComboBox<String> server = new JComboBox<>(serverModel);
     private final JTextField name = new NameTextField( "", 15);
 
     private final static String [] freqs = { "None", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
     private final JComboBox<String> reminderFreq = new JComboBox<>(freqs);
+    private final JLabel serverLabel = new JLabel();
 
     private final Settings settings;
 
@@ -49,20 +48,20 @@ public class SettingsDialog extends JDialog {
 
         okBtn.addActionListener(this::processOk);
         cancelBtn.addActionListener(this::processCancel);
-
+        serverModel.addAll(settings.getServerNames());
         buttonPanel.add(okBtn);
         buttonPanel.add(cancelBtn);
         contentPane.add(buttonPanel, BorderLayout.SOUTH);
         contentPane.add(mainPanel, BorderLayout.CENTER);
+        serverLabel.setMinimumSize(new Dimension(300, 0));
 
         addRow(mainPanel, "Name", name);
-        addRow(mainPanel, "Host", host);
-        addRow(mainPanel, "Port", port);
         addRow(mainPanel, "Audible Reminder Freq (sec)", reminderFreq);
+        addRow(mainPanel, "Server", server);
+        addRow(mainPanel, "Server details", serverLabel);
 
         SpringUtilities.makeCompactGrid(mainPanel, 4, 2, 6, 6, 6, 6);
         setContentPane(contentPane);
-        pack();
 
         var compListener = new ComponentAdapter() {
             @Override
@@ -70,29 +69,55 @@ public class SettingsDialog extends JDialog {
                 super.componentShown(e);
                 try {
                     settings.readSettings();
+                    updateServers();
                     updateFields();
+                    pack();
+                    repaint();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
             }
         };
         addComponentListener(compListener);
+
+        server.addActionListener( (e) -> {
+            setServerLabel(settings.getServer((String) serverModel.getSelectedItem()));
+        });
+    }
+
+    private void setServerLabel(Settings.Server serverValue) {
+        if (serverValue != null) {
+            serverLabel.setText(String.format("host: %s port: %d", serverValue.host(), serverValue.port()));
+        } else {
+            serverLabel.setText("                   ");
+        }
+
     }
 
     private void updateFields() {
         name.setText(settings.getName());
-        host.setText(settings.getHost());
-        port.setText("" + settings.getPort());
         if (settings.getAudibleReminderFreq() == null) {
             reminderFreq.setSelectedIndex(0);
         } else {
             reminderFreq.setSelectedIndex( settings.getAudibleReminderFreq() - 1);
         }
+        serverModel.setSelectedItem(settings.getSelectedServer());
+        setServerLabel(settings.getServer((String) serverModel.getSelectedItem()));
     }
 
+    private void updateServers() {
+        serverModel.removeAllElements();
+        serverModel.addAll(settings.getServerNames());
+   }
+
     private void updateSettings() {
-        Integer reminderValue = (reminderFreq.getSelectedIndex() == 0 ? null : Integer.parseInt((String) reminderFreq.getSelectedItem()));
-        settings.setValues(new Settings.SettingsRec(name.getText(), host.getText(), port.getValue(), reminderValue));
+        var values = settings.getValues();
+        values.audibleReminderFreq = reminderFreq.getSelectedIndex() == 0 ? null : Integer.parseInt((String) reminderFreq.getSelectedItem());
+        values.name = name.getText();
+        values.server = (String) server.getSelectedItem();
+        settings.setValues(values);
+        System.out.println(String.format("min size: %s size: %s", serverLabel.getMinimumSize(), serverLabel.getSize()));
+        System.out.println(String.format("dailog min: %s size %s", getMinimumSize(), getSize()));
     }
 
     private void processOk(ActionEvent e) {

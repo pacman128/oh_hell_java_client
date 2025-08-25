@@ -2,9 +2,11 @@ package ohhell.game;
 
 import java.io.*;
 import java.lang.invoke.MethodHandles;
+import java.util.*;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 
 public class Settings {
@@ -12,18 +14,30 @@ public class Settings {
 
     final private String propertiesFile;
 
-    public record SettingsRec( String name,
-                               String host,
-                               int port,
-                               Integer audibleReminderFreq ) {}
-    private record SettingsJson(SettingsRec settings) {}
+    public record Server(String host, int port) {}
 
-    private SettingsJson settings = new SettingsJson(new SettingsRec("", "127.0.0.1", 7000, 10));
+    public static class SettingsValues {
+        public SettingsValues() {
+            name = "";
+            server = "local";
+            servers.put("local", new Server("127.0.0.1", 7000));
+            servers.put("remote", new Server("ohhell.com", 7000));
+            audibleReminderFreq = 10;
+        }
+        public String name;
+        public String server;
+        public Map<String, Server> servers = new HashMap<>();
+        public Integer audibleReminderFreq;
+    }
+
+    private record SettingsJson(SettingsValues settings) {}
+
+    private SettingsJson settings = new SettingsJson(new SettingsValues());
     private final SettingsListener listener;
 
     @FunctionalInterface
     public interface SettingsListener {
-        void settingsChanged(SettingsRec settings);
+        void settingsChanged(SettingsValues settings);
     }
 
     public Settings(String propertiesFile, SettingsListener listener) {
@@ -46,7 +60,7 @@ public class Settings {
     }
 
     public void writeSettings() throws IOException {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(propertiesFile));
             JsonWriter jsonWriter = gson.newJsonWriter(writer)) {
             gson.toJson(settings, SettingsJson.class, jsonWriter);
@@ -58,16 +72,24 @@ public class Settings {
         return settings.settings.name;
     }
 
-    public String getHost() {
-        return settings.settings.host;
+    public Set<String> getServerNames() {
+        return settings.settings.servers.keySet();
     }
 
-    public int getPort() {
-        return settings.settings.port;
+    public Server getServer(String name) {
+        return settings.settings.servers.get(name);
+    }
+
+    public String getSelectedServer() {
+        return settings.settings.server;
     }
 
     public Integer getAudibleReminderFreq() {
         return settings.settings.audibleReminderFreq;
+    }
+
+    public SettingsValues getValues() {
+        return settings.settings;
     }
 
     private void updateListener() {
@@ -76,12 +98,20 @@ public class Settings {
     }
 
     public void setName(String name) {
-        settings = new SettingsJson(new SettingsRec(name, settings.settings.host, settings.settings.port, settings.settings.audibleReminderFreq));
+        var values = settings.settings;
+        values.name = name;
+        settings = new SettingsJson(values);
         updateListener();
     }
 
+    public void setServer(String server) {
+        var values = settings.settings;
+        values.server = server;
+        settings = new SettingsJson(values);
+        updateListener();
+    }
 
-    public void setValues(SettingsRec settings) {
+    public void setValues(SettingsValues settings) {
         this.settings = new SettingsJson(settings);
         updateListener();
     }

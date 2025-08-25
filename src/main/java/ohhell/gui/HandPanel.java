@@ -1,5 +1,6 @@
 package ohhell.gui;
 
+import ohhell.Util;
 import ohhell.game.Deck;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -88,6 +90,7 @@ public class HandPanel extends JPanel {
                     } else {
                         selectCard(card);
                     }
+                    repaint();
                     break;
                 }
             }
@@ -108,14 +111,20 @@ public class HandPanel extends JPanel {
 
         var positions = getCardPositions();
         final var cards = model.getCards();
+        final var selectedCard = model.getSelectedCard();
         for(int i=0; i < cards.size(); i++) {
             BufferedImage image = Deck.getCardImage(cards.get(i));
             var pos = positions.get(i);
+            if (cards.get(i) == selectedCard) {
+                g.setColor(Color.red);
+                g.drawRect(pos.x -2, pos.y-2, image.getWidth() + 4, image.getHeight() + 4);
+            }
             g.drawImage(image, pos.x, pos.y, null);
         }
     }
 
     public static void main(String [] args) throws IOException {
+        Util.setLevel(Logger.getLogger("ohhell"), Level.FINER);
         Deck.loadCardImages();
 
         SwingUtilities.invokeLater( () -> {
@@ -124,11 +133,12 @@ public class HandPanel extends JPanel {
 
             var model = new GameModel();
             HandPanel handPanel = new HandPanel(model);
-            model.handStarted(List.of(0, 14, 45), 0, 1);
+            model.handStarted(List.of(0, 3, 6, 9, 14, 20, 24, 30, 35, 45), 0, 1);
             model.setSelectedCard(14);
             handPanel.setOpaque(true);
             frame.setContentPane(handPanel);
-            frame.setSize(500, 300);
+            frame.setSize(900, 500);
+            frame.repaint();
             frame.setVisible(true);
 
         });

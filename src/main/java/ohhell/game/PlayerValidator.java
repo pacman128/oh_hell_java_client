@@ -1,9 +1,14 @@
 package ohhell.game;
 
+import java.lang.invoke.MethodHandles;
+import java.util.logging.Logger;
+
 /**
  * Validator of user card plays
  */
 public final class PlayerValidator {
+    /** Logger. */
+    private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
     /** Cards in user's hand */
     private CardList cards;
@@ -25,6 +30,7 @@ public final class PlayerValidator {
     public boolean validateCard(int card, int leadCard) {
         // First check that player has card
         if (!cards.hasCard(card)) {
+            logger.warning(String.format("Card: %s not in hand", Deck.cardToString(card)));
             return false;
         }
 
@@ -32,6 +38,8 @@ public final class PlayerValidator {
         if (leadCard >= 0) {
             int leadSuit = Deck.cardSuit(leadCard);
             if (cards.hasSuit(leadSuit) && Deck.cardSuit(card) != leadSuit) {
+                logger.warning(String.format("Card: %s, not valid because of lead card: %s",
+                                             Deck.cardToString(card), Deck.cardToString(leadCard)));
                 return false;
             }
         }

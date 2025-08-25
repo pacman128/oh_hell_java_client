@@ -48,6 +48,8 @@ public class GameModel implements ClientProtocol  {
 
     private int trumpCard = -1;
 
+    private int numCardsInHand = -1;
+
     private int dealer = -1;
 
     private int cardBeingValidiated = -1;
@@ -72,7 +74,7 @@ public class GameModel implements ClientProtocol  {
     private final List<Listener> listeners = new ArrayList<>();
 
     public interface Listener {
-        void settingsChanged(Settings.SettingsRec rec);
+        void settingsChanged(Settings.SettingsValues rec);
 
         void gameStateChanged();
 
@@ -87,7 +89,7 @@ public class GameModel implements ClientProtocol  {
     public static class ListenerAdapter implements Listener {
 
         @Override
-        public void settingsChanged(Settings.SettingsRec rec) { }
+        public void settingsChanged(Settings.SettingsValues rec) { }
 
         @Override
         public void gameStateChanged() { }
@@ -140,6 +142,10 @@ public class GameModel implements ClientProtocol  {
 
     public int getDealer() {
         return dealer;
+    }
+
+    public int getNumCardsInHand() {
+        return numCardsInHand;
     }
 
     public int getSelectedCard() {
@@ -313,6 +319,7 @@ public class GameModel implements ClientProtocol  {
     public void handStarted(List<Integer> cards, int dealer, int trump) {
         trumpCard = trump;
         this.dealer = dealer;
+        this.numCardsInHand = cards.size();
         this.cards.clear();
         this.cards.addAll(cards);
         for(int i=0; i < numPlayers; i++) {
@@ -372,16 +379,6 @@ public class GameModel implements ClientProtocol  {
     @Override
     public void handEnded(List<Integer> tricksMade, List<Integer> scoreDeltas) {
         for(int i = 0; i < numPlayers; i++) {
-            var line = new StringBuilder(String.format("\"%s\" ", names.get(i)));
-            var scoreDelta = scoreDeltas.get(i);
-            if (scoreDelta > 0) {
-                line.append(String.format("made %d points", scoreDelta));
-            } else if (scoreDelta < 0) {
-                line.append(String.format("when down %d points", -scoreDelta));
-            } else {
-                line.append("went over");
-            }
-            gameLogger.log(line.toString());
             scores.set(i, scores.get(i) + scoreDeltas.get(i));
             statusModel.setValueAt(null, i, BID_COLUMN);
             statusModel.setValueAt(null, i, TRICKS_COLUMN);
@@ -397,17 +394,6 @@ public class GameModel implements ClientProtocol  {
         for(int i=0; i < numPlayers; i++) {
             playedCardForPlayer.set(i, null);
         }
-        var line = new StringBuilder("Game over, winner");
-        if (winningPlayers.size() > 1) {
-            line.append("s are: ");
-        } else {
-            line.append(" is: ");
-        }
-        for( var winnerId: winningPlayers) {
-            line.append(names.get(winnerId));
-            line.append(" ");
-        }
-        gameLogger.log(line.toString());
         notifyListeners();
     }
 
@@ -416,7 +402,7 @@ public class GameModel implements ClientProtocol  {
         gameLogger.log(String.format("Error: %s", msg));
     }
 
-    private void settingsChanged(Settings.SettingsRec settings) {
+    private void settingsChanged(Settings.SettingsValues settings) {
         for( var listener: listeners) {
             listener.settingsChanged(settings);
         }

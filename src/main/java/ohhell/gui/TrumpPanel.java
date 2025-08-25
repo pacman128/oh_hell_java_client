@@ -39,7 +39,7 @@ public class TrumpPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         var trumpCard = model.getTrump();
-        var cardImage = (trumpCard > 0) ? Deck.getCardImage(trumpCard) : Deck.getCardBackImage();
+        var cardImage = (trumpCard >= 0) ? Deck.getCardImage(trumpCard) : Deck.getCardBackImage();
 
         g.drawImage(cardImage, 10, OtherPlayerPanel.baseCardTop, null);
 

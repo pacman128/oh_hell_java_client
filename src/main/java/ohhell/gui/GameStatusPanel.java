@@ -12,15 +12,50 @@ import java.util.List;
  */
 public class GameStatusPanel extends JPanel {
 
+    private final JLabel dealer = new JLabel();
+
+    private final JLabel numTricks = new JLabel();
+
+    private final GameModel model;
+
     public GameStatusPanel(GameModel gameModel, Font font) {
         super(new BorderLayout());
-        DefaultTableModel model = gameModel.getStatusTableModel();
-        JTable table = new JTable(model);
+        model = gameModel;
+        var handStatusPanel = new JPanel(new FlowLayout());
+        handStatusPanel.add(new JLabel("Num Tricks: "));
+        handStatusPanel.add(numTricks);
+        handStatusPanel.add(new JLabel("  Dealer: "));
+        handStatusPanel.add(dealer);
+        add(handStatusPanel, BorderLayout.NORTH);
+        var tablePanel = new JPanel(new BorderLayout());
+        add(tablePanel, BorderLayout.CENTER);
+        DefaultTableModel tableModel = gameModel.getStatusTableModel();
+        JTable table = new JTable(tableModel);
         table.setFont(font);
         // Needed for table header to be display. See https://stackoverflow.com/a/31137737/1366027
-        add(table, BorderLayout.CENTER);
-        add(table.getTableHeader(), BorderLayout.NORTH);
+        tablePanel.add(table, BorderLayout.CENTER);
+        tablePanel.add(table.getTableHeader(), BorderLayout.NORTH);
         setBorder( BorderFactory.createLineBorder(Color.black));
+        this.model.addListener( new GameModel.ListenerAdapter() {
+            @Override
+            public void gameStateChanged() {
+                modelUpdate();
+            }
+        });
+    }
+
+    private void modelUpdate() {
+        String dealerName = "";
+        if ( model.getDealer() >= 0) {
+            dealerName = model.getPlayerName(model.getDealer());
+        }
+        dealer.setText(dealerName);
+        String numTricksText = "";
+        if (model.getNumCardsInHand() > 0) {
+            numTricksText = String.format("%d", model.getNumCardsInHand());
+        }
+        numTricks.setText(numTricksText);
+        repaint();
     }
 
     public static void main(String [] args) {
@@ -30,12 +65,6 @@ public class GameStatusPanel extends JPanel {
 
             var model = new GameModel();
             var statusPanel = new GameStatusPanel(model, new Font(Font.SERIF, Font.BOLD, 16));
-            model.addListener( new GameModel.ListenerAdapter() {
-                @Override
-                public void gameStateChanged() {
-                    statusPanel.repaint();
-                }
-            });
             model.playerRegistered(1, "Anne");
             model.gameStarted(0, List.of("Paul", "Anne"));
             model.handStarted(List.of(3, 10, 25), 0, 6);

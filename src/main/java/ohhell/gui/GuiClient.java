@@ -41,7 +41,7 @@ public class GuiClient extends JFrame {
         model.setUserInput(mainPanel);
         model.addListener(new GameModel.ListenerAdapter() {
             @Override
-            public void settingsChanged(Settings.SettingsRec settings) {
+            public void settingsChanged(Settings.SettingsValues settings) {
                 handleSettingsChange(settings);
             }
         });
@@ -77,7 +77,8 @@ public class GuiClient extends JFrame {
     private void handleConnect(ActionEvent e) {
         try {
             var settings = model.getSettings();
-            connect(settings.getHost(), settings.getPort());
+            var server = settings.getServer(settings.getSelectedServer());
+            connect(server.host(), server.port());
             connectItem.setEnabled(false);
             disconnectItem.setEnabled(true);
         } catch (Exception ex) {
@@ -108,10 +109,10 @@ public class GuiClient extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private void handleSettingsChange( final Settings.SettingsRec settings) {
+    private void handleSettingsChange( final Settings.SettingsValues settings) {
         SwingUtilities.invokeLater(() -> {
-        connectItem.setEnabled( !(settings.name().isBlank()
-                                  || settings.host().isBlank()
+        connectItem.setEnabled( !(settings.name.isBlank()
+                                  || settings.server.isBlank()
                                   || model.getState() != GameModel.State.DISCONNECTED)); } );
     }
 
@@ -155,7 +156,7 @@ public class GuiClient extends JFrame {
 
         SwingUtilities.invokeLater( () -> {
             var frame = new GuiClient();
-            frame.setSize(1000, 800);
+            frame.setSize(1200, 900);
             frame.setVisible(true);
         });
 

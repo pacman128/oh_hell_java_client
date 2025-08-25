@@ -130,7 +130,7 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
     }
 
     @Override
-    public void settingsChanged(Settings.SettingsRec rec) {
+    public void settingsChanged(Settings.SettingsValues rec) {
         beepCounter = 0;
     }
 
