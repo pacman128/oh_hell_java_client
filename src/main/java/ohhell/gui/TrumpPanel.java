@@ -9,7 +9,6 @@ import java.util.List;
 
 /**
  * Panel to display the trump card.
- *
  * Uses a border titled Trump
  */
 public class TrumpPanel extends JPanel {
@@ -45,6 +44,11 @@ public class TrumpPanel extends JPanel {
 
     }
 
+    /**
+     * Test program
+     * @param args Unused
+     * @throws IOException On I/O error
+     */
     public static void main(String [] args) throws IOException {
         Deck.loadCardImages();
 

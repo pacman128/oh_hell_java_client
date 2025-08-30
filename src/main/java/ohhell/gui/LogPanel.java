@@ -3,9 +3,18 @@ package ohhell.gui;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Panel to show log messages
+ */
 public class LogPanel extends JPanel {
+    /** Text area for log messages */
     private final JTextArea textArea;
 
+    /**
+     * Create a new log panel
+     * @param rows Number of rows
+     * @param columns Num of columns
+     */
     public LogPanel( int rows, int columns) {
         super(new BorderLayout());
 
@@ -18,11 +27,19 @@ public class LogPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
+    /**
+     * Add a log message
+     * @param text Message text
+     */
     public void log(String text) {
         textArea.append(text + "\n");
         textArea.setCaretPosition(textArea.getDocument().getLength());
     }
 
+    /**
+     * Test program
+     * @param args Not used
+     */
     public static void main(String [] args) {
         SwingUtilities.invokeLater( () -> {
             JFrame frame = new JFrame("Demo");

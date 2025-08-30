@@ -9,7 +9,7 @@ import javax.swing.text.Document;
 /**
  * Integer input text field
  *
- * @see https://web.archive.org/web/20210108210848/http://www.java2s.com/Code/Java/Swing-JFC/Textfieldonlyacceptsnumbers.htm
+ * @see <a href="https://web.archive.org/web/20210108210848/http://www.java2s.com/Code/Java/Swing-JFC/Textfieldonlyacceptsnumbers.htm">...</a>
  */
 class IntTextField extends JTextField {
 
@@ -79,6 +79,7 @@ class IntTextField extends JTextField {
                 Integer.parseInt(newString + "0");
                 super.insertString(offs, str, a);
             } catch (NumberFormatException e) {
+                // ignore
             }
         }
     }

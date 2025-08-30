@@ -57,7 +57,6 @@ public class AsyncClient implements AutoCloseable{
     public interface InputProcessor {
         /**
          * Process input data,
-         *
          * Buffer has been flipped before passed to method. It will be cleared after
          * the call.
          * @param buffer Buffer with input data
@@ -138,10 +137,11 @@ public class AsyncClient implements AutoCloseable{
     public void write(byte[] bytes, long timeout) throws IOException {
         ByteBuffer outBuffer = ByteBuffer.wrap(bytes);
         channel.register(selector, SelectionKey.OP_WRITE);
+        long timeLeft = timeout;
         long sleep = Math.min(timeout, 1000);
-        while(timeout > 0) {
+        while(timeLeft > 0) {
             if (selector.select(sleep) < 1) {
-                timeout-=sleep;
+                timeLeft -= sleep;
                 continue;
             }
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -152,20 +152,19 @@ public class AsyncClient implements AutoCloseable{
                     continue;
                 }
                 SocketChannel channel = (SocketChannel)key.channel();
-                logger.finer("write remaining="+outBuffer.remaining());
+                logger.finer("write remaining=" + outBuffer.remaining());
                 channel.write(outBuffer);
-                logger.finer("write remaining="+outBuffer.remaining());
-                if (outBuffer.remaining()<1) {
+                logger.finer("write remaining=" + outBuffer.remaining());
+                if (outBuffer.remaining() <= 0) {
                     return;
                 }
             }
         }
-        throw new IOException("Write timed out");
+        throw new IOException(String.format("Write timed out (timeout: %d)", timeout));
     }
 
     /**
      * Process data received from server.
-     *
      * This method needs to be called regular to handle data from server.
      * @param timeout Timeout (ms)
      * @throws IOException On error
@@ -174,16 +173,16 @@ public class AsyncClient implements AutoCloseable{
         try {
             channel.register(selector, SelectionKey.OP_READ);
             long sleep = Math.min(timeout, 1000);
-            while(timeout>0) {
+            while (timeout>0) {
                 if (selector.select(sleep) < 1) {
-                    timeout-=sleep;
+                    timeout -= sleep;
                     continue;
                 }
                 Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
                 while(keys.hasNext()) {
                     SelectionKey key = keys.next();
                     keys.remove();
-                    if (!key.isValid() || !key.isReadable()) {
+                    if ( !key.isValid() || !key.isReadable()) {
                         continue;
                     }
                     SocketChannel channel = (SocketChannel)key.channel();

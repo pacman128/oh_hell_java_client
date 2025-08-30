@@ -22,6 +22,9 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Logger;
 
+/**
+ * Panel to use to log calls made by LayoutManagers for debugging
+ */
 public class SpyPanel extends JPanel {
 
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());

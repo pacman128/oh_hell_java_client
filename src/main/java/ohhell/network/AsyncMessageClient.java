@@ -10,10 +10,10 @@ import java.util.logging.Logger;
 
 /**
  * Async message client.
- *
  * Messages are delimited by line feeds (\n)
  */
 public class AsyncMessageClient implements AutoCloseable{
+    /** Logger */
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
     /**
@@ -115,6 +115,10 @@ public class AsyncMessageClient implements AutoCloseable{
         asyncClient.processRead(timeout);
     }
 
+    /**
+     * Close the client
+     * @throws IOException On I/O error
+     */
     @Override
     public void close() throws IOException {
         asyncClient.close();

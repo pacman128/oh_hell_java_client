@@ -15,33 +15,51 @@ import java.util.logging.Logger;
  * Dialog to change settings
  */
 public class SettingsDialog extends JDialog {
+    /** Logger */
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
+    /** Combo box model to pick server */
     private final DefaultComboBoxModel<String> serverModel = new DefaultComboBoxModel<>();
+    /** Combo box to pick server */
     private final JComboBox<String> server = new JComboBox<>(serverModel);
+    /** Player name field */
     private final JTextField name = new NameTextField( "", 15);
 
+    /** Values for reminder frequencies */
     private final static String [] freqs = { "None", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+    /** Combo box for reminder frequencies */
     private final JComboBox<String> reminderFreq = new JComboBox<>(freqs);
+    /** Label to show server parameters */
     private final JLabel serverLabel = new JLabel();
-
+    /** Game settings */
     private final Settings settings;
 
-    private void addRow(JPanel mainPanel, String label, JComponent comp) {
+    /**
+     * Add row consisting of a label and a component
+     * @param mainDialogPanel Main panel of dialog
+     * @param label Text for row label
+     * @param comp Component for row
+     */
+    private void addRow(JPanel mainDialogPanel, String label, JComponent comp) {
         var l = new JLabel(label);
-        mainPanel.add(l);
+        mainDialogPanel.add(l);
         l.setLabelFor(comp);
-        mainPanel.add(comp);
+        mainDialogPanel.add(comp);
     }
 
-    public SettingsDialog(Frame aFrame, Settings settings) {
-        super(aFrame, true);
+    /**
+     * Create a new Settings dialog window
+     * @param parent Parent frame
+     * @param settings Settings object
+     */
+    public SettingsDialog(Frame parent, Settings settings) {
+        super(parent, true);
         this.settings = settings;
         setTitle("Settings");
 
         var contentPane = new JPanel(new BorderLayout());
         var mainLayout = new SpringLayout();
-        var mainPanel = new JPanel(mainLayout);
+        var mainDialogPanel = new JPanel(mainLayout);
         var buttonPanel = new JPanel(new FlowLayout( FlowLayout.TRAILING));
         var okBtn = new JButton("OK");
         var cancelBtn = new JButton("Cancel");
@@ -52,15 +70,15 @@ public class SettingsDialog extends JDialog {
         buttonPanel.add(okBtn);
         buttonPanel.add(cancelBtn);
         contentPane.add(buttonPanel, BorderLayout.SOUTH);
-        contentPane.add(mainPanel, BorderLayout.CENTER);
+        contentPane.add(mainDialogPanel, BorderLayout.CENTER);
         serverLabel.setMinimumSize(new Dimension(300, 0));
 
-        addRow(mainPanel, "Name", name);
-        addRow(mainPanel, "Audible Reminder Freq (sec)", reminderFreq);
-        addRow(mainPanel, "Server", server);
-        addRow(mainPanel, "Server details", serverLabel);
+        addRow(mainDialogPanel, "Name", name);
+        addRow(mainDialogPanel, "Audible Reminder Freq (sec)", reminderFreq);
+        addRow(mainDialogPanel, "Server", server);
+        addRow(mainDialogPanel, "Server details", serverLabel);
 
-        SpringUtilities.makeCompactGrid(mainPanel, 4, 2, 6, 6, 6, 6);
+        SpringUtilities.makeCompactGrid(mainDialogPanel, 4, 2, 6, 6, 6, 6);
         setContentPane(contentPane);
 
         var compListener = new ComponentAdapter() {
@@ -85,6 +103,10 @@ public class SettingsDialog extends JDialog {
         });
     }
 
+    /**
+     * Set value of server label
+     * @param serverValue Server value (null for none)
+     */
     private void setServerLabel(Settings.Server serverValue) {
         if (serverValue != null) {
             serverLabel.setText(String.format("host: %s port: %d", serverValue.host(), serverValue.port()));
@@ -94,6 +116,9 @@ public class SettingsDialog extends JDialog {
 
     }
 
+    /**
+     * Update the fields from settings
+     */
     private void updateFields() {
         name.setText(settings.getName());
         if (settings.getAudibleReminderFreq() == null) {
@@ -105,21 +130,29 @@ public class SettingsDialog extends JDialog {
         setServerLabel(settings.getServer((String) serverModel.getSelectedItem()));
     }
 
+    /**
+     * Update servers from settings
+     */
     private void updateServers() {
         serverModel.removeAllElements();
         serverModel.addAll(settings.getServerNames());
    }
 
+    /**
+     * Update settings from dialog values
+     */
     private void updateSettings() {
         var values = settings.getValues();
         values.audibleReminderFreq = reminderFreq.getSelectedIndex() == 0 ? null : Integer.parseInt((String) reminderFreq.getSelectedItem());
         values.name = name.getText();
         values.server = (String) server.getSelectedItem();
         settings.setValues(values);
-        System.out.println(String.format("min size: %s size: %s", serverLabel.getMinimumSize(), serverLabel.getSize()));
-        System.out.println(String.format("dailog min: %s size %s", getMinimumSize(), getSize()));
     }
 
+    /**
+     * Process click on OK button
+     * @param e Unused
+     */
     private void processOk(ActionEvent e) {
         setVisible(false);
         try {
@@ -130,10 +163,17 @@ public class SettingsDialog extends JDialog {
         }
     }
 
+    /**
+     * Process click on Cancel button
+     * @param e Unused
+     */
     private void processCancel(ActionEvent e) {
         setVisible(false);
     }
 
+    /**
+     * Create and show the dialog as a test
+     */
     public static void createAndShowGUI() {
         var frame = new JFrame("SettingsDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -150,6 +190,10 @@ public class SettingsDialog extends JDialog {
         frame.setVisible(true);
     }
 
+    /**
+     * Test program
+     * @param args Unused
+     */
     public static void main(String [] args) {
         SwingUtilities.invokeLater(SettingsDialog::createAndShowGUI);
     }

@@ -7,7 +7,8 @@ import javax.swing.text.PlainDocument;
 import javax.swing.text.Document;
 
 /**
- * Name input text field
+ * Name input text field.
+ * This field does not allow spaces
  */
 class NameTextField extends JTextField {
     /**

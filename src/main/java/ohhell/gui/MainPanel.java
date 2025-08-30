@@ -9,36 +9,45 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
 
+/**
+ * Main panel for the game
+ */
 public class MainPanel extends JPanel implements GameModel.Listener, GameModel.UserInput {
 
-    private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
+    /** Text font to use */
     private final static Font textFont = new Font(Font.SERIF, Font.BOLD, 16);
+    /** Card text size */
     private final static int cardTextSize = 20;
+    /** Color to blink when user input is required */
     private final static Color notifyColor = Color.green;
 
+    /** Game model */
     private final GameModel model;
+    /** Panel to display other player's hands */
     private final JPanel otherPlayersPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-    private final Map<Integer, OtherPlayerPanel> otherPlayers = new HashMap<>();
+    /** Panel with log messages */
     private final LogPanel logPanel = new LogPanel(20, 30);
+    /** Play card button */
     private final JButton playButton = new JButton("Play");
+    /** Card to play label */
     private final JLabel playLabel = new JLabel(getCardText(null));
+    /** Bid input field */
     private final IntTextField bidField =  new IntTextField(0, 2);
+    /** Panel with play button */
     private final JPanel playButtonPanel;
+    /** Panel with bid input field */
     private final JPanel bidPanel;
-
+    /** Counter for beep reminder to give input */
     private int beepCounter = 0;
+    /** Callback for playing a card */
     private ClientProtocol.InputCallback cardCallback;
+    /** Callback for making a bid */
     private ClientProtocol.InputCallback bidCallback;
 
     /**
      * Get card text for the play card panel.
-     *
      * This method pads the text with spaces to keep the panel the same size no matter what
      * card is selected (or none selected)
      * @param card card value as Integer (null if not card selected)
@@ -52,6 +61,10 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
         return cardText + " ".repeat(cardTextSize - cardText.length());
     }
 
+    /**
+     * Create a main panel
+     * @param model Game model
+     */
     public MainPanel(GameModel model) {
         super(new BorderLayout());
 
@@ -91,10 +104,19 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
         bidField.addActionListener(this::bidMade);
     }
 
+    /**
+     * Blink the background of a component
+     * @param comp Component to blink
+     * @param normalColor Normal background color
+     * @param otherColor Other background color to blink to
+     */
     private static void blink(JComponent comp, Color normalColor, Color otherColor) {
         comp.setBackground((comp.getBackground() == normalColor) ? otherColor : normalColor);
     }
 
+    /**
+     * Hint to the user that an action is needed by beeping and blinking
+     */
     public void processUserHints() {
         if (model.userActionRequired()) {
             var reminderFreq = model.getSettings().getAudibleReminderFreq();
@@ -117,23 +139,40 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
 
     }
 
+    /**
+     * Add a message to the log panel
+     * @param msg Message
+     */
     public void log(String msg) {
         logPanel.log(msg);
     }
 
+    /**
+     * Process new player
+     * @param id ID of player
+     * @param name Name of player
+     */
     @Override
     public void newPlayer(int id, String name) {
         var playerPanel = new OtherPlayerPanel(model, id, textFont);
         otherPlayersPanel.add(playerPanel);
-        otherPlayers.put(id, playerPanel);
         repaint();
     }
 
+    /**
+     * Handle settings change
+     * @param rec New settings
+     */
     @Override
     public void settingsChanged(Settings.SettingsValues rec) {
+        // Reset beepCounter
         beepCounter = 0;
     }
 
+    /**
+     * Get a card to play from user
+     * @param callback Callback to return card with
+     */
     @Override
     public void getCard( ClientProtocol.InputCallback callback) {
         SoundUtils.playCard();
@@ -141,12 +180,19 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
         playButton.setEnabled(model.getSelectedCard() >= 0);
     }
 
+    /**
+     * Get a bid from the user
+     * @param callback Callback to return bid with
+     */
     @Override
     public void getBid( ClientProtocol.InputCallback callback) {
         SoundUtils.makeBid();
         bidCallback = callback;
     }
 
+    /**
+     * Handle a game state change
+     */
     @Override
     public void gameStateChanged() {
         switch(model.getState()) {
@@ -176,17 +222,30 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
         repaint();
     }
 
+    /**
+     * Return the card played by user
+     * @param e Unused
+     */
     private void cardPlayed(ActionEvent e) {
         playButton.setEnabled(false);
         cardCallback.returnValue(model.getSelectedCard());
     }
 
+    /**
+     * Return the bid made by user
+     * @param e Unused
+     */
     private void bidMade(ActionEvent e) {
         bidField.setEnabled(false);
         bidCallback.returnValue(bidField.getValue());
         bidField.clear();
     }
 
+    /**
+     * Test program
+     * @param args Unused
+     * @throws IOException On I/O error
+     */
     public static void main(String [] args) throws IOException {
         Deck.loadCardImages();
 

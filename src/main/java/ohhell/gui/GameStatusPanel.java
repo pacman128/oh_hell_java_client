@@ -7,17 +7,24 @@ import java.util.List;
 
 /**
  * Panel to show the status of the game.
- *
  * For each user it shows the bid amount, current tricks taken and score.
  */
 public class GameStatusPanel extends JPanel {
 
+    /** Label to display dealer name */
     private final JLabel dealer = new JLabel();
 
+    /** Label to show number of tricks in current hand */
     private final JLabel numTricks = new JLabel();
 
+    /** Model for game */
     private final GameModel model;
 
+    /**
+     * Create a new status panel
+     * @param gameModel Model for game
+     * @param font Font for table
+     */
     public GameStatusPanel(GameModel gameModel, Font font) {
         super(new BorderLayout());
         model = gameModel;
@@ -44,6 +51,9 @@ public class GameStatusPanel extends JPanel {
         });
     }
 
+    /**
+     * Update panel from model
+     */
     private void modelUpdate() {
         String dealerName = "";
         if ( model.getDealer() >= 0) {
