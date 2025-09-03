@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Main panel for the game
  */
-public class MainPanel extends JPanel implements GameModel.Listener, GameModel.UserInput {
+public class MainPanel extends JPanel implements GameModel.Listener {
 
     /** Text font to use */
     private final static Font textFont = new Font(Font.SERIF, Font.BOLD, 16);
@@ -170,27 +170,6 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
     }
 
     /**
-     * Get a card to play from user
-     * @param callback Callback to return card with
-     */
-    @Override
-    public void getCard( ClientProtocol.InputCallback callback) {
-        SoundUtils.playCard();
-        cardCallback = callback;
-        playButton.setEnabled(model.getSelectedCard() >= 0);
-    }
-
-    /**
-     * Get a bid from the user
-     * @param callback Callback to return bid with
-     */
-    @Override
-    public void getBid( ClientProtocol.InputCallback callback) {
-        SoundUtils.makeBid();
-        bidCallback = callback;
-    }
-
-    /**
      * Handle a game state change
      */
     @Override
@@ -208,17 +187,15 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
                 break;
         }
 
-        var playCard = cardCallback != null
-                && model.getSelectedCard() >= 0
-                && model.getState() == GameModel.State.WAITING_FOR_CARD_RESPONSE;
+        var playCard = model.getSelectedCard() >= 0
+                       && model.getState() == GameModel.State.WAITING_FOR_CARD_RESPONSE;
         playButton.setEnabled(playCard);
         if (playCard) {
             playLabel.setText(getCardText(model.getSelectedCard()));
         } else {
             playLabel.setText(getCardText(null));
         }
-        bidField.setEnabled(bidCallback != null
-                            && model.getState() == GameModel.State.WAITING_FOR_BID_RESPONSE);
+        bidField.setEnabled(model.getState() == GameModel.State.WAITING_FOR_BID_RESPONSE);
         repaint();
     }
 
@@ -228,7 +205,7 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
      */
     private void cardPlayed(ActionEvent e) {
         playButton.setEnabled(false);
-        cardCallback.returnValue(model.getSelectedCard());
+        model.playCard(model.getSelectedCard());
     }
 
     /**
@@ -237,7 +214,7 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
      */
     private void bidMade(ActionEvent e) {
         bidField.setEnabled(false);
-        bidCallback.returnValue(bidField.getValue());
+        model.bid(bidField.getValue());
         bidField.clear();
     }
 
@@ -257,7 +234,6 @@ public class MainPanel extends JPanel implements GameModel.Listener, GameModel.U
             final var model = new GameModel();
             final var panel = new MainPanel(model);
             model.addListener( panel);
-            model.setUserInput( panel);
             model.gameStarted(0, List.of("User", "P1", "P2"));
             panel.log("Log msg");
             model.handStarted(cards, 0, 25);

@@ -1,8 +1,6 @@
 package ohhell.gui;
 
-import ohhell.game.ClientProtocol;
-import ohhell.game.Deck;
-import ohhell.game.Settings;
+import ohhell.game.*;
 
 import javax.swing.table.DefaultTableModel;
 import java.lang.invoke.MethodHandles;
@@ -39,8 +37,6 @@ public class GameModel implements ClientProtocol  {
     /** Game settings */
     private final Settings settings;
 
-    private UserInput userInput;
-
     /** Game logger */
     private GameLogger gameLogger = new GameLogger() {
         @Override
@@ -68,7 +64,22 @@ public class GameModel implements ClientProtocol  {
     private int dealer = -1;
 
     /** Value of current card being validated */
-    private int cardBeingValidiated = -1;
+    private int cardBeingValidated = -1;
+
+    /** Bid validator */
+    private BidValidator bidValidator;
+
+    /** Callback for returning user bid */
+    private InputCallback bidCallback;
+
+    /** Validator for user card selections */
+    private final PlayerValidator cardValidator = new PlayerValidator();
+
+    /** Callback for returning user card play */
+    private InputCallback playCallback;
+
+    /** Lead card for trick */
+    private int leadCard = -1;
 
     /** Names of players */
     private final List<String> names = new ArrayList<>();
@@ -76,15 +87,22 @@ public class GameModel implements ClientProtocol  {
     /** Scores of players */
     private final List<Integer> scores = new ArrayList<>();
 
+    /** Number of tricks taken by each player */
     private final List<Integer> tricks = new ArrayList<>();
 
+    /** Number of cards each player currently has */
     private final List<Integer> numCardsForPlayer = new ArrayList<>();
 
+    /** Played card for each player for current trick (-1 for none) */
     private final List<Integer> playedCardForPlayer = new ArrayList<>();
 
+    /** Cards held by user */
     private final List<Integer> cards = new ArrayList<>();
 
+    /** Card selected to play by user */
     private int selectedCard = -1;
+
+    /** Card played by user for current trick */
     private int playedCard = -1;
 
     /** Model listeners */
@@ -141,23 +159,6 @@ public class GameModel implements ClientProtocol  {
     }
 
     /**
-     * Interface for getting user input
-     */
-    public interface UserInput {
-        /**
-         * Get card to play
-         * @param callback Callback to return card with
-         */
-        void getCard(InputCallback callback);
-
-        /**
-         * Get bid from player
-         * @param callback Callback to return bid with
-         */
-        void getBid(InputCallback callback);
-    }
-
-    /**
      * Create a new model
      */
     public GameModel() {
@@ -166,14 +167,6 @@ public class GameModel implements ClientProtocol  {
         settings = new Settings(settingsFile, this::settingsChanged);
         String[] columnNames = {"Name", "Tricks", "Bid", "Score"};
         statusModel = new DefaultTableModel(columnNames, 0);
-    }
-
-    /**
-     * Set the UserInput to use
-     * @param userInput UserInput to use
-     */
-    public void setUserInput( UserInput userInput) {
-        this.userInput = userInput;
     }
 
     /**
@@ -325,7 +318,8 @@ public class GameModel implements ClientProtocol  {
     }
 
     /**
-     * Play selected card
+     * Play selected card.
+     * Play the card selected by user.
      */
     public void playCard() {
         playedCard = selectedCard;
@@ -373,6 +367,35 @@ public class GameModel implements ClientProtocol  {
     }
 
     /**
+     * Validate and then send bid to server
+     * @param bid User bid
+     */
+    public void bid(int bid) {
+        if (bidValidator.validateBid(bid)) {
+            state = State.PLAYING;
+            bidCallback.returnValue(bid);
+        } else {
+            gameLogger.log("Invalid bid: " + bid);
+        }
+        notifyListeners();
+    }
+
+    /**
+     * Validate and then send user card play to server
+     * @param card User card
+     */
+    public void playCard(int card) {
+        if (cardValidator.validateCard(card, leadCard)) {
+            state = State.PLAYING;
+            cardBeingValidated = card;
+            playCallback.returnValue(card);
+        } else {
+            gameLogger.log("Invalid card: " + Deck.cardToString(card));
+        }
+        notifyListeners();
+    }
+
+    /**
      * Get player name to use
      * @return Player name
      */
@@ -388,7 +411,7 @@ public class GameModel implements ClientProtocol  {
     @Override
     public void getCard(final InputCallback callback) {
         state = State.WAITING_FOR_CARD_RESPONSE;
-        userInput.getCard( (card) -> {cardBeingValidiated = card; callback.returnValue(card); });
+        playCallback = callback;
         if (cards.size() == 1) {
             selectedCard = cards.get(0);
         }
@@ -402,7 +425,7 @@ public class GameModel implements ClientProtocol  {
     @Override
     public void getBid(final InputCallback callback) {
         state = State.WAITING_FOR_BID_RESPONSE;
-        userInput.getBid( callback );
+        bidCallback = callback;
         notifyListeners();
     }
 
@@ -413,7 +436,7 @@ public class GameModel implements ClientProtocol  {
     @Override
     public void validation(String errorMsg) {
         if (errorMsg != null) {
-            gameLogger.log(String.format("%s is not valid: %s", Deck.cardToString(cardBeingValidiated), errorMsg));
+            gameLogger.log(String.format("%s is not valid: %s", Deck.cardToString(cardBeingValidated), errorMsg));
         } else {
             state = State.PLAYING;
             playCard();
@@ -452,6 +475,7 @@ public class GameModel implements ClientProtocol  {
         this.playerId = playerId;
         names.addAll(playerNames);
         numPlayers = playerNames.size();
+        bidValidator = new BidValidator(numPlayers);
         for( int i=0; i < numPlayers; i++) {
             scores.add(0);
             tricks.add(0);
@@ -483,6 +507,7 @@ public class GameModel implements ClientProtocol  {
         names.addAll(playerNames);
         this.scores.addAll(scores);
         numPlayers = playerNames.size();
+        bidValidator = new BidValidator(numPlayers);
         for( int i=0; i < numPlayers; i++) {
             tricks.add(0);
             playedCardForPlayer.add(null);
@@ -514,6 +539,8 @@ public class GameModel implements ClientProtocol  {
         this.numCardsInHand = cards.size();
         this.cards.clear();
         this.cards.addAll(cards);
+        bidValidator.newHand(cards.size());
+        cardValidator.setCards(cards);
         for(int i=0; i < numPlayers; i++) {
             tricks.set(i, 0);
             statusModel.setValueAt(null, i, BID_COLUMN);
@@ -531,6 +558,7 @@ public class GameModel implements ClientProtocol  {
     @Override
     public void bidMade(int playerId, int bid) {
         statusModel.setValueAt(bid, playerId, BID_COLUMN);
+        bidValidator.addBid(bid);
         notifyListeners();
     }
 
@@ -574,6 +602,10 @@ public class GameModel implements ClientProtocol  {
      */
     @Override
     public void cardPlayed(int playerId, int card) {
+        // Set the leadCard value if this is first card
+        if (leadCard < 0) {
+            leadCard = card;
+        }
         numCardsForPlayer.set(playerId, numCardsForPlayer.get(playerId) - 1);
         playedCardForPlayer.set(playerId, card);
         gameLogger.log(String.format("\"%s\" played %s", names.get(playerId), Deck.cardToString(card)));
@@ -624,7 +656,7 @@ public class GameModel implements ClientProtocol  {
     }
 
     /**
-     * NOtification of error
+     * Notification of error
      * @param msg Error message
      */
     @Override
@@ -650,6 +682,8 @@ public class GameModel implements ClientProtocol  {
         for(int i=0; i < numPlayers; i++) {
             playedCardForPlayer.set(i, null);
         }
+        // Reset leadCard value
+        leadCard = -1;
         notifyListeners();
     }
 }

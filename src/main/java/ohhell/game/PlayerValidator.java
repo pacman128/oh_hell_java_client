@@ -1,6 +1,7 @@
 package ohhell.game;
 
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -11,14 +12,15 @@ public final class PlayerValidator {
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
     /** Cards in user's hand */
-    private CardList cards;
+    private final CardList cards = new CardList();
 
     /**
      * Set list of users cards
-     * @param cardList Cards dealt to player
+     * @param cards Cards dealt to player
      */
-    public void setCards(CardList cardList) {
-        cards = new CardList(cardList);
+    public void setCards(List<Integer> cards) {
+        this.cards.clear();
+        this.cards.addCards(cards);
     }
 
     /**

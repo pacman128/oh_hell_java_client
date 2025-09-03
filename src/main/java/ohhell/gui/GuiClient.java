@@ -58,7 +58,7 @@ public class GuiClient extends JFrame {
     public GuiClient() {
         super("Oh Hell");
         model.addListener(mainPanel);
-        model.setUserInput(mainPanel);
+        //model.setUserInput(mainPanel);
         model.addListener(new GameModel.ListenerAdapter() {
             @Override
             public void settingsChanged(Settings.SettingsValues settings) {

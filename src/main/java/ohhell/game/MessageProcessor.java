@@ -77,7 +77,7 @@ public class MessageProcessor {
         this.networkClient = networkClient;
         this.gameLogger = gameLogger;
         state = ProcessState.START;
-        this.client = new ClientValidator(client);
+        this.client = client;
         this.networkClient.setMsgProcessor(this::processMsg);
     }
 
