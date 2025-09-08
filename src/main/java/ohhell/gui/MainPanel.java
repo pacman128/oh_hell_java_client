@@ -8,6 +8,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
 
@@ -63,9 +65,10 @@ public class MainPanel extends JPanel implements GameModel.Listener {
 
     /**
      * Create a main panel
+     * @param frame JFrame for game
      * @param model Game model
      */
-    public MainPanel(GameModel model) {
+    public MainPanel(JFrame frame, GameModel model) {
         super(new BorderLayout());
 
         this.model = model;
@@ -102,6 +105,8 @@ public class MainPanel extends JPanel implements GameModel.Listener {
         playButton.setEnabled(false);
         playButton.addActionListener(this::cardPlayed);
         bidField.addActionListener(this::bidMade);
+        // Enter acts as click to Play button
+        frame.getRootPane().setDefaultButton(playButton);
     }
 
     /**
@@ -131,9 +136,11 @@ public class MainPanel extends JPanel implements GameModel.Listener {
             var normalBackground = playButtonPanel.getParent().getBackground();
             if (model.bidRequired()) {
                 blink(bidPanel, normalBackground, notifyColor);
+                bidField.requestFocusInWindow();
             }
             if (model.cardRequired()) {
                 blink(playButtonPanel, normalBackground, notifyColor);
+                playButton.requestFocusInWindow();
             }
         }
 
@@ -232,7 +239,7 @@ public class MainPanel extends JPanel implements GameModel.Listener {
 
             final var cards = List.of(6, 10, 21, 33, 34, 40);
             final var model = new GameModel();
-            final var panel = new MainPanel(model);
+            final var panel = new MainPanel(frame, model);
             model.addListener( panel);
             model.gameStarted(0, List.of("User", "P1", "P2"));
             panel.log("Log msg");

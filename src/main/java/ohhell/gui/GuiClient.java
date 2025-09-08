@@ -26,13 +26,10 @@ public class GuiClient extends JFrame {
     private final GameModel model = new GameModel();
 
     /** Main panel for UI */
-    private final MainPanel mainPanel = new MainPanel(model);
+    private final MainPanel mainPanel;
 
     /** Message client to communicate with server */
     private AsyncMessageClient messageClient;
-
-    /** Message processor that translates server messages to ClientProtocol */
-    private MessageProcessor messageProcessor;
 
     /** Connect menu item */
     private final JMenuItem connectItem = new JMenuItem("Connect", KeyEvent.VK_C);
@@ -47,7 +44,7 @@ public class GuiClient extends JFrame {
     private final int timeout = 1000;
 
     /** GUI task for events like blinking */
-    private final javax.swing.Timer guiTask = new javax.swing.Timer(timeout, (e) -> {mainPanel.processUserHints(); });
+    private final javax.swing.Timer guiTask;
 
     /** Network I/O task */
     private final NetworkTask networkTask;
@@ -57,6 +54,7 @@ public class GuiClient extends JFrame {
      */
     public GuiClient() {
         super("Oh Hell");
+        mainPanel = new MainPanel(this, model);
         model.addListener(mainPanel);
         //model.setUserInput(mainPanel);
         model.addListener(new GameModel.ListenerAdapter() {
@@ -67,6 +65,7 @@ public class GuiClient extends JFrame {
         });
 
         networkTask = new NetworkTask(this::handleDisconnect, 100);
+        guiTask = new javax.swing.Timer(timeout, (e) -> {mainPanel.processUserHints(); });
         guiTask.setCoalesce(true);
         guiTask.start();
         settingsDialog = new SettingsDialog(this, model.getSettings());
@@ -188,7 +187,7 @@ public class GuiClient extends JFrame {
         messageClient.connect(1000);
 
         // Create message processor
-        messageProcessor = new MessageProcessor(messageClient, new GuiDecorator(model, networkTask,3000), this::log);
+        MessageProcessor messageProcessor = new MessageProcessor(messageClient, new GuiDecorator(model, networkTask, 3000), this::log);
 
         // Start network task
         networkTask.start(messageProcessor);
