@@ -187,6 +187,7 @@ public class MainPanel extends JPanel implements GameModel.Listener {
                 break;
             case WAITING_FOR_BID_RESPONSE:
                 bidPanel.setBackground(notifyColor);
+                bidField.requestFocusInWindow();
                 break;
             default:
                 playButtonPanel.setBackground(playButtonPanel.getParent().getBackground());

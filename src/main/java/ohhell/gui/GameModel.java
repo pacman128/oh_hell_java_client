@@ -17,8 +17,8 @@ public class GameModel implements ClientProtocol  {
     /** logger */
     private final static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getPackage().getName());
 
-    private final static int TRICKS_COLUMN = 1;
-    private final static int BID_COLUMN = 2;
+    private final static int TRICKS_COLUMN = 2;
+    private final static int BID_COLUMN = 1;
     private final static int SCORE_COLUMN = 3;
 
     /** Game state */
@@ -31,8 +31,23 @@ public class GameModel implements ClientProtocol  {
         GAME_OVER
     };
 
+    /**
+     * Customized table model for game status.
+     * It makes cells uneditable.
+     */
+    private static class StatusTableModel extends DefaultTableModel {
+        public StatusTableModel( Object [] columnNames) {
+            super(columnNames, 0);
+        }
+
+        @Override
+        public boolean isCellEditable(int column, int row) {
+            return false;
+        }
+    }
+
     /** Table model for status panel */
-    private final DefaultTableModel statusModel;
+    private final StatusTableModel statusModel;
 
     /** Game settings */
     private final Settings settings;
@@ -165,8 +180,8 @@ public class GameModel implements ClientProtocol  {
         final String settingsFile = Paths.get(System.getProperty("user.home"), "oh_hell.settings").toString();
         logger.info(String.format("Settings file: %s", settingsFile));
         settings = new Settings(settingsFile, this::settingsChanged);
-        String[] columnNames = {"Name", "Tricks", "Bid", "Score"};
-        statusModel = new DefaultTableModel(columnNames, 0);
+        String[] columnNames = {"Name", "Bid", "Tricks", "Score"};
+        statusModel = new StatusTableModel(columnNames);
     }
 
     /**
