@@ -25,7 +25,7 @@ public class TrumpPanel extends JPanel {
         this.model = model;
         setBorder(BorderFactory.createLineBorder(Color.black));
         var image = Deck.getCardBackImage();
-        Dimension size = new Dimension(20 + image.getWidth(), 50 + image.getHeight());
+        Dimension size = new Dimension(20 + image.getWidth(), 70 + image.getHeight());
         setPreferredSize(size);
         setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Trump"));
     }

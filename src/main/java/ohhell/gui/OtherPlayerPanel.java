@@ -16,8 +16,11 @@ public class OtherPlayerPanel extends JPanel {
     private final static int cardSpacing = 10;
     private final static int cardOffset = 10;
 
+    /** ID of player */
     private final int playerId;
+    /** Font for player name */
     private final Font nameFont;
+    /** Game model */
     private final GameModel model;
 
     /**
@@ -31,13 +34,13 @@ public class OtherPlayerPanel extends JPanel {
         this.model = model;
         this.playerId = playerId;
         nameFont = font;
-        setPreferredSize(new Dimension(250, 200));
+        setPreferredSize(new Dimension(200, 150));
         setBorder(BorderFactory.createLineBorder(Color.black));
     }
 
     /**
      * Paint the panel
-     * @param g Graphics constext to use
+     * @param g Graphics context to use
      */
     @Override
     protected void paintComponent(Graphics g) {

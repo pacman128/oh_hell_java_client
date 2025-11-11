@@ -8,8 +8,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
 
@@ -110,6 +108,14 @@ public class MainPanel extends JPanel implements GameModel.Listener {
     }
 
     /**
+     * Reset the game state
+     */
+    public void resetGame() {
+        model.resetGame();
+        otherPlayersPanel.removeAll();
+    }
+
+    /**
      * Blink the background of a component
      * @param comp Component to blink
      * @param normalColor Normal background color
@@ -128,7 +134,13 @@ public class MainPanel extends JPanel implements GameModel.Listener {
             if ( reminderFreq != null ) {
                 beepCounter++;
                 if (beepCounter >= reminderFreq) {
-                    SoundUtils.beep();
+                    if (model.bidRequired()) {
+                        SoundUtils.makeBid();
+                    } else if (model.cardRequired()) {
+                        SoundUtils.playCard();
+                    } else {
+                        SoundUtils.beep();
+                    }
                     beepCounter = 0;
                 }
             }
@@ -238,7 +250,7 @@ public class MainPanel extends JPanel implements GameModel.Listener {
             JFrame frame = new JFrame("Oh Hell");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-            final var cards = List.of(6, 10, 21, 33, 34, 40);
+            final var cards = List.of(0, 1, 2, 3, 4, 5, 6, 7, 10, 21, 33, 34);
             final var model = new GameModel();
             final var panel = new MainPanel(frame, model);
             model.addListener( panel);

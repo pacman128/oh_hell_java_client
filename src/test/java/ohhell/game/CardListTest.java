@@ -71,16 +71,45 @@ class CardListTest {
     @org.junit.jupiter.api.Test
     void hasSuit() {
         assertEquals(0, cardList.size());
-        for(int i=0; i < 3; i++) {
+        for(int i=0; i < 4; i++) {
             assertFalse(cardList.hasSuit(i), "Suit: " + i);
         }
         cardList.addCard(0);
         assertTrue(cardList.hasSuit(0));
-        for(int i=1; i < 3; i++) {
+        for(int i=1; i < 4; i++) {
             assertFalse(cardList.hasSuit(i), "Suit: " + i);
         }
 
     }
+
+    @org.junit.jupiter.api.Test
+    void cardsInSuit() {
+        assertEquals(0, cardList.size());
+        for(int i=0; i < 4; i++) {
+            assertEquals(0, cardList.cardsInSuit(i).size(), "Suit: " + i);
+        }
+        cardList.addCard(0);
+        var suitCards = cardList.cardsInSuit(0);
+        assertEquals(1, suitCards.size());
+        assertEquals(0, suitCards.get(0));
+        for(int i=1; i < 4; i++) {
+            assertEquals(0, cardList.cardsInSuit(i).size(), "Suit: " + i);
+        }
+
+        cardList.addCard(15);
+        cardList.addCard(18);
+        suitCards = cardList.cardsInSuit(0);
+        assertEquals(1, suitCards.size());
+        assertEquals(0, suitCards.get(0));
+        suitCards = cardList.cardsInSuit(1);
+        assertEquals(2, suitCards.size());
+        assertEquals(15, suitCards.get(0));
+        assertEquals(18, suitCards.get(1));
+        for(int i=2; i < 4; i++) {
+            assertEquals(0, cardList.cardsInSuit(i).size(), "Suit: " + i);
+        }
+    }
+
 
     @org.junit.jupiter.api.Test
     void getFirstCard() {

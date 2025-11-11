@@ -40,12 +40,6 @@ public class GuiClient extends JFrame {
     /** Settings dialog window */
     private final SettingsDialog settingsDialog;
 
-    /** Time to wait for events (ms) */
-    private final int timeout = 1000;
-
-    /** GUI task for events like blinking */
-    private final javax.swing.Timer guiTask;
-
     /** Network I/O task */
     private final NetworkTask networkTask;
 
@@ -56,7 +50,6 @@ public class GuiClient extends JFrame {
         super("Oh Hell");
         mainPanel = new MainPanel(this, model);
         model.addListener(mainPanel);
-        //model.setUserInput(mainPanel);
         model.addListener(new GameModel.ListenerAdapter() {
             @Override
             public void settingsChanged(Settings.SettingsValues settings) {
@@ -65,7 +58,12 @@ public class GuiClient extends JFrame {
         });
 
         networkTask = new NetworkTask(this::handleDisconnect, 100);
-        guiTask = new javax.swing.Timer(timeout, (e) -> {mainPanel.processUserHints(); });
+
+        int timeout = 1000; // Time to wait for events (ms)
+        // GUI task for events like blinking
+        Timer guiTask = new Timer(timeout, (e) -> {
+            mainPanel.processUserHints();
+        });
         guiTask.setCoalesce(true);
         guiTask.start();
         settingsDialog = new SettingsDialog(this, model.getSettings());
@@ -183,6 +181,7 @@ public class GuiClient extends JFrame {
      */
     public void connect(String host, int port) throws IOException {
         // Create and connect message client
+        mainPanel.resetGame();
         messageClient = new AsyncMessageClient(host, port, msg -> {});
         messageClient.connect(1000);
 

@@ -15,14 +15,14 @@ public class SoundUtils {
     }
 
     /**
-     * Make a sound to remind user to play a card
+     * Remind user to play a card
      */
     static void playCard() {
         beep();
     }
 
     /**
-     * Make a sound to remind user to bid
+     * Remind user to bid
      */
     static void makeBid() {
         beep();

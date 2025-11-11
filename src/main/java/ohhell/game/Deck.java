@@ -3,6 +3,7 @@ package ohhell.game;
 import ohhell.Util;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,12 +80,22 @@ public final class Deck {
      * @throws IOException On I/O error
      */
     public static synchronized void loadCardImages() throws IOException {
+        loadCardImages(60, 80);
+    }
+
+    /**
+     * Load card images
+     * @param width Width of images
+     * @param height Height of images
+     * @throws IOException On I/O error
+     */
+    public static synchronized void loadCardImages(int width, int height) throws IOException {
         if (cardImages.isEmpty()) {
             Arrays.asList("c", "d", "h", "s").forEach( suit -> {
                 Arrays.asList("2", "3", "4", "5", "6", "7", "8", "9", "t", "j", "q", "k", "a").forEach( value -> {
                    InputStream strm = Util.getFileFromResourceAsStream(Util.class,"images/" + suit + value + ".png");
                    try {
-                       cardImages.add(ImageIO.read(strm));
+                       cardImages.add(getScaledImage(ImageIO.read(strm), width, height));
                    } catch( IOException e) {
                        throw new RuntimeException((e));
                    }
@@ -92,8 +103,23 @@ public final class Deck {
             });
 
             InputStream strm = Util.getFileFromResourceAsStream(Util.class, "images/back.png");
-            cardBackImage = ImageIO.read(strm);
+            cardBackImage = getScaledImage(ImageIO.read(strm), width, height);
         }
+    }
+
+    /**
+     * Create a scaled image of existing image
+     * @param image Original image
+     * @param width New width of scaled image
+     * @param height New height of scale image
+     * @return Scaled image
+     */
+    private static BufferedImage getScaledImage( BufferedImage image, int width, int height) {
+        Image scaledImage = image.getScaledInstance(width, height, BufferedImage.SCALE_AREA_AVERAGING);
+        BufferedImage bufScaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        var graphics = bufScaledImage.getGraphics();
+        graphics.drawImage(scaledImage, 0, 0, null);
+        return bufScaledImage;
     }
 
     /**

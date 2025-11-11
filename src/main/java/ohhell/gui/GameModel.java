@@ -112,7 +112,7 @@ public class GameModel implements ClientProtocol  {
     private final List<Integer> playedCardForPlayer = new ArrayList<>();
 
     /** Cards held by user */
-    private final List<Integer> cards = new ArrayList<>();
+    private final CardList cards = new CardList();
 
     /** Card selected to play by user */
     private int selectedCard = -1;
@@ -182,6 +182,31 @@ public class GameModel implements ClientProtocol  {
         settings = new Settings(settingsFile, this::settingsChanged);
         String[] columnNames = {"Name", "Bid", "Tricks", "Score"};
         statusModel = new StatusTableModel(columnNames);
+    }
+
+    /**
+     * Reset the game.
+     * Most likely due to reconnection
+     */
+    public void resetGame() {
+        statusModel.setRowCount(0);
+        names.clear();
+        scores.clear();
+        cards.clear();
+        numCardsForPlayer.clear();
+        playedCardForPlayer.clear();
+        tricks.clear();
+        cardBeingValidated = -1;
+        selectedCard = -1;
+        playedCard = -1;
+        leadCard = -1;
+        numPlayers = -1;
+        playerId = -1;
+        trumpCard = -1;
+        dealer = -1;
+        bidCallback = null;
+        playCallback = null;
+        state = State.DISCONNECTED;
     }
 
     /**
@@ -278,7 +303,7 @@ public class GameModel implements ClientProtocol  {
      * @return Cards for hand
      */
     public List<Integer> getCards() {
-        return cards;
+        return cards.getList();
     }
 
     /**
@@ -339,9 +364,8 @@ public class GameModel implements ClientProtocol  {
     public void playCard() {
         playedCard = selectedCard;
         selectedCard = -1;
-        int index = cards.indexOf(playedCard);
-        if (index >= 0) {
-            cards.remove(index);
+        if (cards.hasCard(playedCard)) {
+            cards.removeCard(playedCard);
         } else {
             logger.severe("Card not found in list: " + Deck.cardToString(playedCard));
         }
@@ -428,7 +452,14 @@ public class GameModel implements ClientProtocol  {
         state = State.WAITING_FOR_CARD_RESPONSE;
         playCallback = callback;
         if (cards.size() == 1) {
-            selectedCard = cards.get(0);
+            selectedCard = cards.getFirstCard();
+        } else if ( leadCard != -1 ){
+            int leadSuit = Deck.cardSuit(leadCard);
+            var suitCards = cards.cardsInSuit(leadSuit);
+            if ( suitCards.size() == 1) {
+                selectedCard = suitCards.get(0);
+            }
+
         }
         notifyListeners();
     }
@@ -543,7 +574,7 @@ public class GameModel implements ClientProtocol  {
 
     /**
      * Hand started
-     * @param cards Cards dealt to client
+     * @param cards Cards dealt to client (must be sorted)
      * @param dealer ID of dealer
      * @param trump Trump card
      */
@@ -553,7 +584,7 @@ public class GameModel implements ClientProtocol  {
         this.dealer = dealer;
         this.numCardsInHand = cards.size();
         this.cards.clear();
-        this.cards.addAll(cards);
+        this.cards.addCards(cards);
         bidValidator.newHand(cards.size());
         cardValidator.setCards(cards);
         for(int i=0; i < numPlayers; i++) {

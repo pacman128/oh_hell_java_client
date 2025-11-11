@@ -104,12 +104,11 @@ public class HandPanel extends JPanel {
         // If game is waiting for a card to be selected
         if (model.getPlayedCard() < 0) {
 
-            var positions = getCardPositions();
-            var cards = model.getCards();
+            var positions = CardPlacer.placeCards(model.getCards(), model.getSelectedCard());
             // Look for a card with a rectangle that contains the mouse position
-            for (int i = 0; i < positions.size(); i++) {
-                if (positions.get(i).contains(e.getPoint())) {
-                    var card = cards.get(i);
+            for (var pos: positions) {
+                if (pos.position().contains(e.getPoint())) {
+                    var card = pos.card();
 
                     // If clicked on selected card
                     if (card == model.getSelectedCard()) {
@@ -135,6 +134,11 @@ public class HandPanel extends JPanel {
         // Do normal paint
         super.paintComponent(g);
 
+        paintCards(g);
+    }
+
+    private void paintCards(Graphics g) {
+
         // If a card has been played, display it at top of panel
         final int playedCard = model.getPlayedCard();
         if (playedCard >= 0) {
@@ -145,13 +149,11 @@ public class HandPanel extends JPanel {
         }
 
         // Display the unplayed cards
-        var positions = getCardPositions();
-        final var cards = model.getCards();
-        final var selectedCard = model.getSelectedCard();
-        for(int i=0; i < cards.size(); i++) {
-            BufferedImage image = Deck.getCardImage(cards.get(i));
-            var pos = positions.get(i);
-            if (cards.get(i) == selectedCard) {
+        var positions = CardPlacer.placeCards(model.getCards(), model.getSelectedCard());
+        for(var position: positions) {
+            BufferedImage image = Deck.getCardImage(position.card());
+            var pos = position.position();
+            if (position.selected()) {
                 g.setColor(Color.red);
                 g.drawRect(pos.x -2, pos.y-2, image.getWidth() + 4, image.getHeight() + 4);
             }

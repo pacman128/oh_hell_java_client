@@ -73,14 +73,23 @@ public final class CardList {
      * @return true if suit found, else false
      */
     public boolean hasSuit(int suit) {
-        for( int i=13*suit; i < 13*suit + 13; i++) {
-            if (cards.contains((i))) {
-                return true;
-            }
-        }
-        return false;
+        return !cardsInSuit(suit).isEmpty();
     }
 
+    /**
+     * List of the cards in suit that are in hand
+     * @param suit Suit to look for
+     * @return List of cards in suit are in hand
+     */
+    public List<Integer> cardsInSuit(int suit) {
+        ArrayList<Integer> suitCards = new ArrayList<>();
+        for( int i=13*suit; i < 13*suit + 13; i++) {
+            if (cards.contains((i))) {
+                suitCards.add(i);
+            }
+        }
+        return suitCards;
+    }
     /**
      * How many cards are in list
      * @return Number of cards in list
